@@ -11,7 +11,7 @@ public class Main {
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.add(new Window());
                 frame.pack();
-                frame.setTitle("Doom");
+                frame.setTitle("Matrix Test");
                 frame.setResizable(false);
                 frame.setFocusable(true);
                 frame.requestFocusInWindow();

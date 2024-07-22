@@ -1,156 +1,141 @@
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.*;
 import java.awt.image.BufferedImage;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class Window extends JPanel implements ActionListener {
+  private static final int WIDTH = 1200;
+  private static final int HEIGHT = 675;
+  private final BufferedImage bufferedImage;
+  private final JLabel jLabel = new JLabel();
+  private final Timer timer  = new Timer(10, this);
+  private double[][] rotationMatrix = {
+    {1, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 0, 1, 0},
+    {0, 0, 0, 1}
+  };
+  private double[][] translationMatrix = {
+    {1, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 0, 1, 0},
+    {0, 0, 0, 1}
+  };
+  private double[][] cameraMatrix = matrixMultiply(rotationMatrix, translationMatrix);
+  private double[][] viewportMatrix = {
+    {WIDTH / 2, 0, 0, (WIDTH - 1) / 2},
+    {0, HEIGHT / 2, 0, (HEIGHT - 1) / 2},
+    {0, 0, 0.5, 0.5}
+  };
+  private double left = -3;
+  private double right = 3;
+  private double bottom = -3;
+  private double top = 3;
+  private double near = -1;
+  private double far = 1;
+  // Perspective
+  private double[][] projectionMatrix = {
+    {(2 * near) / (right - left), 0, (right + left) / (right - left), 0},
+    {0, (2 * near) / (top - bottom), (top + bottom) / (top - bottom), 0},
+    {0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)},
+    {0, 0, -1, 0}
+  };
+  // Orthographic
+  // private double[][] projectionMatrix = {
+  //   {2 / (right - left), 0, 0, -(right + left) / (right - left)},
+  //   {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
+  //   {0, 0, -2 / (far - near), -(far + near) / (far - near)},
+  //   {0, 0, 0, 1}
+  // };
+  private double[][] cubeVertices = {
+    {-1, -1, -11, 1},
+    {1, -1, -11, 1},
+    {1, 1, -11, 1},
+    {-1, 1, -11, 1},
+    {-1, -1, -9, 1},
+    {1, -1, -9, 1},
+    {1, 1, -9, 1},
+    {-1, 1, -9, 1}
+  };
+  private int[][] cubeEdges = {
+    {0, 1}, {1, 2}, {2, 3}, {3, 0},
+    {4, 5}, {5, 6}, {6, 7}, {7, 4},
+    {0, 4}, {1, 5}, {2, 6}, {3, 7}
+  };
 
-    private static final int WIDTH = 600;
-    private static final int HEIGHT = 400;
-    private final BufferedImage bufferedImage;
-    private final JLabel jLabel = new JLabel();
-    private final Timer timer  = new Timer(10, this);
-    private double[] projection = mat4Ortho(0, WIDTH, HEIGHT, 0, -1, 1);
+  public Window() {
+      super(true);
+      this.setLayout(new GridLayout());
+      this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+      bufferedImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+      jLabel.setIcon(new ImageIcon(bufferedImage));
+      this.add(jLabel);
+      timer.start();
+  }
 
-    public Window() {
-        super(true);
-        this.setLayout(new GridLayout());
-        this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        bufferedImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        jLabel.setIcon(new ImageIcon(bufferedImage));
-        this.add(jLabel);
-        timer.start();
+  @Override
+  public void actionPerformed(ActionEvent e) {
+      clear();
+      createSquare();
+      jLabel.repaint();
+  }
+
+  private void clear() {
+    Graphics2D g = bufferedImage.createGraphics();
+    g.setColor(Color.gray);
+    g.fillRect(0, 0, WIDTH, HEIGHT);
+    g.dispose();
+  }
+
+  private void createSquare() {
+    Graphics2D g = bufferedImage.createGraphics();
+    g.setColor(Color.blue);
+    double[][] cameraMatrixCube = matrixMultiply(cameraMatrix, matrixTranspose(cubeVertices));
+    double[][] projectionMatrixCube = matrixMultiply(projectionMatrix, cameraMatrixCube);
+    projectionMatrixCube = matrixDivideArray(projectionMatrixCube, projectionMatrixCube[3]);
+    double[][] viewportMatrixCube = matrixMultiply(viewportMatrix, projectionMatrixCube);
+
+    for (int i = 0; i < cubeEdges.length; i++) {
+      g.drawLine((int)viewportMatrixCube[0][cubeEdges[i][0]], (int)viewportMatrixCube[1][cubeEdges[i][0]], (int)viewportMatrixCube[0][cubeEdges[i][1]], (int)viewportMatrixCube[1][cubeEdges[i][1]]);
     }
+    g.dispose();
+  }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        clear();
-        createSquare();
-        jLabel.repaint();
-    }
-
-    private void clear() {
-      Graphics2D g = bufferedImage.createGraphics();
-      g.setColor(Color.gray);
-      g.fillRect(0, 0, WIDTH, HEIGHT);
-      g.dispose();
-    }
-
-    private void createLine(int[] coord1, int[] coord2, int width, Color color) {
-      int x = coord2[0] - coord1[0];
-      int y = coord2[1] - coord1[1];
-      double r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-      double angle = Math.atan2(y, x);
-      double[] translate = mat4Translate((coord1[0] + coord2[0]) / 2, (coord1[1] + coord2[1]) / 2, 0);
-      double[] scale = mat4Scale(r, width, 1);
-      double[] rotate = mat4Rotate(0, 0, 1, angle);
-      double[] model = mat4Mul(mat4Mul(scale, rotate), translate);
-      
-      Graphics2D g = bufferedImage.createGraphics();
-      g.setStroke(new BasicStroke(width));
-      // g.drawLine();
-    }
-
-    private void createSquare() {
-        Graphics2D g = bufferedImage.createGraphics();
-        g.setColor(Color.blue);
-        g.dispose();
-    }
-
-    private double[] mat4Ortho(double right, double left, double bottom, double top, double near, double far) {
-      double[] mat = {
-        2 / (right - left),
-        0,
-        0,
-        0,
-        0,
-        2 / (top - bottom),
-        0,
-        0,
-        0,
-        0,
-        -2 / (far - near),
-        0,
-        -(right + left) / (right - left),
-        -(top + bottom) / (top - bottom),
-        -(far + near) / (far - near),
-        1
-      };
-      return mat;
-    }
-
-    private double[] mat4Translate(double x, double y, double z) {
-      double[] mat = {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        x, y, z, 1
-      };
-
-      return mat;
-    }
-
-      private double[] mat4Scale(double x, double y, double z) {
-        double[] mat = {
-          x, 0, 0, 0,
-          0, y, 0, 0,
-          0, 0, z, 0,
-          0, 0, 0, 1
-        };
-
-      return mat;
-    }
-
-    private double[] mat4Rotate(double x, double y, double z, double angle) {
-      double cos = Math.cos(angle);
-      double sin = Math.sin(angle);
-      double tan = 1 - cos;
-
-      double l = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-
-      double normalizedX = x / l;
-      double normalizedY = y / l;
-      double normalizedZ = z / l;
-
-      double[] result = {
-        tan * normalizedX * normalizedX + cos,
-        tan * normalizedX * normalizedY - sin * normalizedZ,
-        tan * normalizedX * normalizedZ + sin * normalizedY,
-        0,
-        tan * normalizedX * normalizedY + sin * normalizedZ,
-        tan * normalizedY * normalizedY + cos,
-        tan * normalizedY * normalizedZ - sin * normalizedX,
-        0,
-        tan * normalizedX * normalizedZ - sin * normalizedY,
-        tan * normalizedY * normalizedZ + sin * normalizedX,
-        tan * normalizedZ * normalizedZ + cos,
-        0,
-        0,
-        0,
-        0,
-        1
-      };
-
-      return result;
-    }
-
-    private double[] mat4Mul(double[] m1, double[] m2) {
-      double[] result = {
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0
-      };
-
-      for (int i = 0; i < 16; i++) {
-        result[i] = m1[i] * m2[i] + m1[i + 1] * m2[i + 1] + m1[i + 2] * m2[i + 2] + m1[i + 3] * m2[i + 3];
+  private double[][] matrixMultiply(double[][] matrix1, double[][] matrix2) {
+    double result[][] = new double[matrix1.length][matrix2[0].length];
+    for (int i = 0; i < matrix1.length; i++) {
+      for (int j = 0; j < matrix2[0].length; j++) {
+        for (int k = 0; k < matrix1[0].length; k++) {
+          result[i][j] += matrix1[i][k] * matrix2[k][j];
+        }
       }
-
-      return result;
     }
+    return result;
+  }
+
+  private double[][] matrixTranspose(double[][] matrix) {
+    double[][] transpose = new double[matrix[0].length][matrix.length];
+    for (int i = 0; i < matrix.length; i++) {
+      for (int j = 0; j < matrix[0].length; j++) {
+        transpose[j][i] = matrix[i][j];
+      }
+    }
+    return transpose;
+  }
+
+  private double[][] matrixDivideArray(double[][] matrix, double[] array) {
+    for (int i = 0; i < matrix.length; i++) {
+      for (int j = 0; j < matrix[0].length; j++) {
+        matrix[i][j] /= array[j];
+      }
+    }
+    return matrix;
+  }
 }
