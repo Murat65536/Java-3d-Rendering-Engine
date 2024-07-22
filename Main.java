@@ -8,14 +8,17 @@ public class Main {
             @Override
             public void run() {
                 JFrame frame = new JFrame();
+                Window window = new Window();
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new Window());
+                frame.add(window);
                 frame.pack();
                 frame.setTitle("Matrix Test");
                 frame.setResizable(false);
                 frame.setFocusable(true);
                 frame.requestFocusInWindow();
                 frame.setVisible(true);
+                window.clear();
+                window.createCube();
             }
         });
     }
