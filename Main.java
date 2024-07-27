@@ -17,8 +17,8 @@ public class Main {
                 frame.setFocusable(true);
                 frame.requestFocusInWindow();
                 frame.setVisible(true);
-                window.clear();
-                window.createCube();
+                window.addItem(0, 0, 10);
+                window.addItem(3, 0, 10);
             }
         });
     }

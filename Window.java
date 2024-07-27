@@ -5,6 +5,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.ArrayList;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -15,24 +17,37 @@ public class Window extends JPanel implements ActionListener {
   private static final int HEIGHT = 675;
   private final BufferedImage bufferedImage;
   private final JLabel jLabel = new JLabel();
-  private final Timer timer  = new Timer(10, this);
+  private final Timer timer = new Timer(10, this);
 
-  private double[][] cubeVertices = {
-    {-1, -1, -1, 1},
-    {1, -1, -1, 1},
-    {1, 1, -1, 1},
-    {-1, 1, -1, 1},
-    {-1, -1, 1, 1},
-    {1, -1, 1, 1},
-    {1, 1, 1, 1},
-    {-1, 1, 1, 1}
+  private double[][] cameraMatrix = {
+    {(double)HEIGHT / (double)WIDTH, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 0, 1, 0},
+    {0, 0, 0, 1}
   };
-  
-  private int[][] cubeEdges = {
-    {0, 1}, {1, 2}, {2, 3}, {3, 0},
-    {4, 5}, {5, 6}, {6, 7}, {7, 4},
-    {0, 4}, {1, 5}, {2, 6}, {3, 7}
+
+  private double left = -3;
+  private double right = 3;
+  private double bottom = -3;
+  private double top = 3;
+  private double near = -1;
+  private double far = 1;
+  // Perspective
+  private double[][] projectionMatrix = {
+    {(2 * near) / (right - left), 0, (right + left) / (right - left), 0},
+    {0, (2 * near) / (top - bottom), (top + bottom) / (top - bottom), 0},
+    {0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)},
+    {0, 0, -1, 0}
   };
+  // Orthographic
+  // private double[][] projectionMatrix = {
+  //   {2 / (right - left), 0, 0, -(right + left) / (right - left)},
+  //   {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
+  //   {0, 0, -2 / (far - near), -(far + near) / (far - near)},
+  //   {0, 0, 0, 1}
+  // };
+
+  private ArrayList<ArrayList<Double>> items = new ArrayList<ArrayList<Double>>();
 
   public Window() {
       super(true);
@@ -46,56 +61,61 @@ public class Window extends JPanel implements ActionListener {
 
   @Override
   public void actionPerformed(ActionEvent e) {
+    clear();
+    for (int i = 0; i < items.toArray().length; i++) {
+      createCube(items.get(i).get(0), items.get(i).get(1), items.get(i).get(2));
+    }
     jLabel.repaint();
   }
 
-  public void clear() {
+  public void addItem(double x, double y, double z) {
+    items.add(new ArrayList<Double>(Arrays.asList(x, y, z)));
+    System.out.println(Arrays.deepToString(items.toArray()));
+  }
+  
+  private void clear() {
     Graphics2D g = bufferedImage.createGraphics();
     g.setColor(Color.gray);
     g.fillRect(0, 0, WIDTH, HEIGHT);
     g.dispose();
   }
+  
+  public void moveCamera(double x, double y, double z) {
+    cameraMatrix[0][3] += x;
+    cameraMatrix[1][3] += y;
+    cameraMatrix[2][3] += z;
+  }
+  
+  public void scaleCamera(double x, double y, double z) {
+    cameraMatrix[0][0] += x;
+    cameraMatrix[1][1] += y;
+    cameraMatrix[2][2] += z;
+  }
 
-  public void createCube() {
-    double[] translationVector = {0, 0, 10, 0};
-    double[][] rotationMatrix = {
-      {1, 0, 0, 0},
-      {0, 1, 0, 0},
-      {0, 0, 1, 0},
-      {0, 0, 0, 1}
+  private void createCube(double x, double y, double z) {
+    double[][] cubeVertices = {
+      {-1, -1, -1, 1},
+      {1, -1, -1, 1},
+      {1, 1, -1, 1},
+      {-1, 1, -1, 1},
+      {-1, -1, 1, 1},
+      {1, -1, 1, 1},
+      {1, 1, 1, 1},
+      {-1, 1, 1, 1}
     };
-    double[][] translationMatrix = {
-      {1, 0, 0, 0},
-      {0, 1, 0, 0},
-      {0, 0, 1, 0},
-      {0, 0, 0, 1}
+    
+    int[][] cubeEdges = {
+      {0, 1}, {1, 2}, {2, 3}, {3, 0},
+      {4, 5}, {5, 6}, {6, 7}, {7, 4},
+      {0, 4}, {1, 5}, {2, 6}, {3, 7}
     };
-    double[][] cameraMatrix = matrixMultiply(rotationMatrix, translationMatrix);
+
+    double[] translationVector = {x, y, z, 0};
     double[][] viewportMatrix = {
       {WIDTH / 2, 0, 0, (WIDTH - 1) / 2},
       {0, HEIGHT / 2, 0, (HEIGHT - 1) / 2},
       {0, 0, 0.5, 0.5}
     };
-    double left = -3;
-    double right = 3;
-    double bottom = -3;
-    double top = 3;
-    double near = -1;
-    double far = 1;
-    // Perspective
-    double[][] projectionMatrix = {
-      {(2 * near) / (right - left), 0, (right + left) / (right - left), 0},
-      {0, (2 * near) / (top - bottom), (top + bottom) / (top - bottom), 0},
-      {0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)},
-      {0, 0, -1, 0}
-    };
-    // Orthographic
-    // private double[][] projectionMatrix = {
-    //   {2 / (right - left), 0, 0, -(right + left) / (right - left)},
-    //   {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
-    //   {0, 0, -2 / (far - near), -(far + near) / (far - near)},
-    //   {0, 0, 0, 1}
-    // };
 
     Graphics2D g = bufferedImage.createGraphics();
     g.setColor(Color.blue);
