@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import math
 # We import the numpy library to easily perform matrix operations. The reason we imported matplotlib.pyplot and Poly3DCollection is to see the process visually.
 #Homogeneous point we want to convert
 point_3d = np.array([0, 0, -10, 1])
@@ -19,7 +20,7 @@ rotation_matrix = np.array([
 [1, 0, 0, 0],
 [0, 1, 0, 0],
 [0, 0, 1, 0],
-[0, 0, 0, 1]
+[math.sin(0.1), 0, 0, 1]
 ])
 translation_matrix = np.array([
 [1, 0, 0, 0],

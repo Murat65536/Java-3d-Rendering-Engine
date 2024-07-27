@@ -17,6 +17,7 @@ public class Main {
                 frame.setFocusable(true);
                 frame.requestFocusInWindow();
                 frame.setVisible(true);
+                frame.addKeyListener(window);
                 window.addItem(0, 0, 10);
                 window.addItem(3, 0, 10);
             }

@@ -4,6 +4,8 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -12,7 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-public class Window extends JPanel implements ActionListener {
+public class Window extends JPanel implements ActionListener, KeyListener {
   private static final int WIDTH = 1200;
   private static final int HEIGHT = 675;
   private final BufferedImage bufferedImage;
@@ -33,19 +35,19 @@ public class Window extends JPanel implements ActionListener {
   private double near = -1;
   private double far = 1;
   // Perspective
-  private double[][] projectionMatrix = {
-    {(2 * near) / (right - left), 0, (right + left) / (right - left), 0},
-    {0, (2 * near) / (top - bottom), (top + bottom) / (top - bottom), 0},
-    {0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)},
-    {0, 0, -1, 0}
-  };
-  // Orthographic
   // private double[][] projectionMatrix = {
-  //   {2 / (right - left), 0, 0, -(right + left) / (right - left)},
-  //   {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
-  //   {0, 0, -2 / (far - near), -(far + near) / (far - near)},
-  //   {0, 0, 0, 1}
+  //   {(2 * near) / (right - left), 0, (right + left) / (right - left), 0},
+  //   {0, (2 * near) / (top - bottom), (top + bottom) / (top - bottom), 0},
+  //   {0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)},
+  //   {0, 0, -1, 0}
   // };
+  // Orthographic
+  private double[][] projectionMatrix = {
+    {2 / (right - left), 0, 0, -(right + left) / (right - left)},
+    {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
+    {0, 0, -2 / (far - near), -(far + near) / (far - near)},
+    {0, 0, 0, 1}
+  };
 
   private ArrayList<ArrayList<Double>> items = new ArrayList<ArrayList<Double>>();
 
@@ -70,7 +72,6 @@ public class Window extends JPanel implements ActionListener {
 
   public void addItem(double x, double y, double z) {
     items.add(new ArrayList<Double>(Arrays.asList(x, y, z)));
-    System.out.println(Arrays.deepToString(items.toArray()));
   }
   
   private void clear() {
@@ -90,6 +91,12 @@ public class Window extends JPanel implements ActionListener {
     cameraMatrix[0][0] += x;
     cameraMatrix[1][1] += y;
     cameraMatrix[2][2] += z;
+  }
+
+  public void rotateCamera(double x, double y, double z) {
+    cameraMatrix[3][0] += x;
+    cameraMatrix[3][1] += y;
+    cameraMatrix[3][2] += z;
   }
 
   private void createCube(double x, double y, double z) {
@@ -168,4 +175,29 @@ public class Window extends JPanel implements ActionListener {
     }
     return matrix;
   }
+
+  public void keyPressed(KeyEvent event) {
+    switch (event.getKeyCode()) {
+      case KeyEvent.VK_W:
+        moveCamera(0, 0, -0.1);
+        break;
+      case KeyEvent.VK_A:
+        moveCamera(0.1, 0, 0);
+        break;
+      case KeyEvent.VK_D:
+        moveCamera(-0.1, 0, 0);
+        break;
+      case KeyEvent.VK_S:
+        moveCamera(0, 0, 0.1);
+        break;
+      case KeyEvent.VK_LEFT:
+        rotateCamera(Math.sin(-0.01), 0, 0);
+        break;
+      case KeyEvent.VK_RIGHT:
+        rotateCamera(Math.sin(0.01), 0, 0);
+        break;
+    }
+  }
+  public void keyReleased(KeyEvent event) {}
+  public void keyTyped(KeyEvent event) {}
 }
