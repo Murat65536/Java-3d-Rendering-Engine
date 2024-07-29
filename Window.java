@@ -35,18 +35,11 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private double near = -1;
   private double far = 1;
   // Perspective
-  // private double[][] projectionMatrix = {
-  //   {(2 * near) / (right - left), 0, (right + left) / (right - left), 0},
-  //   {0, (2 * near) / (top - bottom), (top + bottom) / (top - bottom), 0},
-  //   {0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)},
-  //   {0, 0, -1, 0}
-  // };
-  // Orthographic
   private double[][] projectionMatrix = {
-    {2 / (right - left), 0, 0, -(right + left) / (right - left)},
-    {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
-    {0, 0, -2 / (far - near), -(far + near) / (far - near)},
-    {0, 0, 0, 1}
+    {(2 * near) / (right - left), 0, (right + left) / (right - left), 0},
+    {0, (2 * near) / (top - bottom), (top + bottom) / (top - bottom), 0},
+    {0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)},
+    {0, 0, -1, 1}
   };
 
   private ArrayList<ArrayList<Double>> items = new ArrayList<ArrayList<Double>>();
@@ -191,10 +184,10 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         moveCamera(0, 0, 0.1);
         break;
       case KeyEvent.VK_LEFT:
-        rotateCamera(Math.sin(-0.01), 0, 0);
+        rotateCamera(Math.sin(-0.1), 0, 0);
         break;
       case KeyEvent.VK_RIGHT:
-        rotateCamera(Math.sin(0.01), 0, 0);
+        rotateCamera(Math.sin(0.1), 0, 0);
         break;
     }
   }
